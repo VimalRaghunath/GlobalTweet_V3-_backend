@@ -288,7 +288,7 @@ module.exports = {
           CoverPic: coverpic,
         },
       });
-      res.status(200).json("CoverPhoto Succesful");
+      res.status(200).json("CoverPhoto Successfull");
     } else {
       res.status(404).json("error");
     }
@@ -421,7 +421,9 @@ getComment: async (req, res) => {
   followUser: async (req, res) => {
     try {
       const userId = req.params.id;
-      const loggedInUserId = res.token;
+      console.log(userId,"47");
+      const loggedInUserId = req.user;
+      console.log(loggedInUserId)
 
       if (userId === loggedInUserId) {
         return res.status(400).json({ error: "Cannot follow yourself" });
