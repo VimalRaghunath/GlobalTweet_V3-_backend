@@ -210,10 +210,14 @@ module.exports = {
 
       const results = await Tweet.find({ text: regex });
 
-      res.json(results);
+      res.status(200).json({
+        status: "success",
+        message: "Search successful",
+        data: results,
+      });
     } catch (error) {
-      // console.error(error);
-      res.status(500).json({ message: "Internal server error" });
+      console.error("Error in explore:", error);
+      res.status(500).json({ status: "error", message: "Internal server error" });
     }
   },
 
@@ -460,7 +464,6 @@ getComment: async (req, res) => {
         .status(200)
         .json({ status: "success", message: "User followed successfully" });
     } catch (error) {
-      // console.error(error);
       res.status(500).json({ error: "Internal Server Error" });
     }
   },
@@ -470,8 +473,8 @@ getComment: async (req, res) => {
   unfollowUser: async (req, res) => {
     try {
       const { userId } = req.params;
-      const loggedInUserId = res.token;
-
+      const { id: loggedInUserId } = req.user;
+      
       if (userId === loggedInUserId) {
         return res.status(400).json({ error: "Cannot unfollow yourself" });
       }
@@ -514,4 +517,8 @@ getComment: async (req, res) => {
   },
 
   // messsages showing in profile [GET api/user/messages]---------------
+
+  
+
+
 };
