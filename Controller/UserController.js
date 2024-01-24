@@ -76,10 +76,12 @@ module.exports = {
         { id: User._id },
         process.env.USER_ACCESS_TOKEN_SECRET
       );
+      const {password,...rest}=User._doc
       return res.status(200).json({
         status: "user_success",
         message: "user Signin successful",
         data: token,
+        rest,
       });
     } else {
       return res.status(404).json({ error: "user not found" });
@@ -425,10 +427,8 @@ getComment: async (req, res) => {
   followUser: async (req, res) => {
     try {
       const userId = req.params.id;
-      console.log(userId,"47");
-      const loggedInUserId = req.user;
-      console.log(loggedInUserId)
-
+      const loggedInUserId = res.token;
+ 
       if (userId === loggedInUserId) {
         return res.status(400).json({ error: "Cannot follow yourself" });
       }
@@ -448,7 +448,7 @@ getComment: async (req, res) => {
 
       if (loggedInUser.following.includes(userId)) {
         return res.status(400).json({ error: "Already following this user" });
-      }
+      } 
 
       // Update following array for logged-in user------------
 
@@ -472,8 +472,8 @@ getComment: async (req, res) => {
 
   unfollowUser: async (req, res) => {
     try {
-      const { userId } = req.params;
-      const { id: loggedInUserId } = req.user;
+      const  userId  = req.params.id;
+      const  loggedInUserId  = res.token;
       
       if (userId === loggedInUserId) {
         return res.status(400).json({ error: "Cannot unfollow yourself" });
