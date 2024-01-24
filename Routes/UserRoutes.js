@@ -25,6 +25,8 @@ UserRouter.post('/comment',Trycatch(UserController.setComment))
 UserRouter.get('/getcomment/:id',Trycatch(UserController.getComment))
 UserRouter.post('/follow/:id',Auth,Trycatch(UserController.followUser))
 UserRouter.post('/unfollow/:id',Auth,Trycatch(UserController.unfollowUser))
+UserRouter.get('/followerscount/:id',Auth, UserController.getFollowersCount)
+UserRouter.get('/followingcount/:id',Auth, UserController.getFollowingCount)
 
 
 
