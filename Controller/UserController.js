@@ -115,7 +115,6 @@ module.exports = {
   post: async (req, res) => {
     try {
       const { title, description, image, category, likes, comment } = req.body;
-      // console.log(req.body);
 
       const userPost = await PostSchema.create({
         userId: res.token,
@@ -133,20 +132,6 @@ module.exports = {
         data: userPost,
       });
     } catch (error) {
-      // if (error.name === 'ValidationError') {
-      //   const errors = Object.values(error.errors).map((err) => err.message);
-      //   return res.status(400).json({
-      //     status: 'error',
-      //     message: 'Validation failed',
-      //     errors: errors,
-      //   });
-      // }
-
-      // console.error('Error creating post:', error);
-      // res.status(500).json({
-      //   status: 'error',
-      //   message: 'Internal server error',
-      // });
       console.log(error.message);
     }
   },
@@ -187,7 +172,6 @@ module.exports = {
     }
 
     const post = await PostSchema.find({ userId: res.token });
-    // console.log(post);
     if (!post) {
       return res.status(404).json({ error: "No Posts Found" });
     }
@@ -379,10 +363,7 @@ module.exports = {
 
         res.json(newComment);
       }
-      // else {
-      //   const user = await UserSchemaa.findById(userId).populate('comments');
-      //   res.json(user.comments);
-      // }
+      
     } catch (error) {
       console.error("Error handling user comments:", error);
       res.status(500).json({ error: "Internal Server Error" });
@@ -405,7 +386,6 @@ getComment: async (req, res) => {
       },
     });
 
-  console.log(posts);
     if (!posts) {
       return res.status(404).json({ error: "No Posts Found" });
     }
@@ -522,7 +502,7 @@ getComment: async (req, res) => {
   getFollowersCount: async (req, res) => {
     try {
       const userId = req.params.id;
-    const user = await UserSchemaa.findById(userId);
+      const user = await UserSchemaa.findById(userId);
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -546,7 +526,7 @@ getComment: async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-
+    
     res.json({ count: user.following.length });
   } catch (error) {
     console.error(error);

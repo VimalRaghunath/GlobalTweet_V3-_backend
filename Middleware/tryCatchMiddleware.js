@@ -3,7 +3,6 @@ const tryCatchMiddleware = (trycatchhandler) =>{
         try{
             await trycatchhandler(req,res,next)
         } catch (error) {
-            // console.log(error);
             res.status(500)
             res.json({
                 status:"failure",
