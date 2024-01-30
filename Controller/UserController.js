@@ -534,7 +534,61 @@ getComment: async (req, res) => {
   }
 },
 
+  // get all followers [GET api/user/followers]------------------
+
+  getFollowers: async (req, res) => {
+
+    try {
+      const userId = req.params.id; 
+      const user = await UserSchemaa.findById(userId).populate({
+        path: 'followers', 
+        model: 'User',
+      });
   
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+  
+      const followers = user.followers;
+  
+      return res.status(200).json({
+        status: "success",
+        message: "Followers are here",
+        followers: followers,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  },
+
+  // get following [GET api/user/following]-------------------
+
+  getFollowing: async (req,res) => {
+
+    try {
+       const userId = req.params.id;
+       const user = await UserSchemaa.findById(userId).populate({
+        path: 'following',
+        model: 'User'
+       });
+     
+      if (!user) {
+        return res.status(404).json({ error: "User not found" })
+      } 
+     
+      const following = user.following;
+
+      return res.status(200).json({
+        status: "success",
+        message: "Following users are here",
+        following: following,
+      })
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Internal server error"})
+    }
+  },
 
   // messsages showing in profile [GET api/user/messages]---------------
 
