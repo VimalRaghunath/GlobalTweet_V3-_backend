@@ -1,4 +1,6 @@
-const AdminSchema = require("../Model/AdminSchema")
+// const AdminSchema = require("../Model/AdminSchema")
+
+const UserSchemaa = require("../Model/UserSchemaa");
 
 module.exports = {
 
@@ -10,7 +12,7 @@ module.exports = {
 
   getAllusers : async (req,res) => {
         try {
-            const users = await AdminSchema.find();
+            const users = await UserSchemaa.find();
             res.json(users);
         } catch (error) {
           console.error(error);
@@ -24,7 +26,7 @@ module.exports = {
 
   getAllposts : async (req,res) => {
     try {
-      const posts = await AdminSchema.find();
+      const posts = await UserSchemaa.find();
       res.json(posts)
     } catch (error) {
       console.error(error);
@@ -39,7 +41,7 @@ module.exports = {
           const userId = req.params.id;
       try {
 
-        await AdminSchema.findByIdandDelete(userId)
+        await UserSchemaa.findByIdandDelete(userId)
          res.json({ message: 'User deleted successfully' });
 
        } catch (error) {

@@ -2,7 +2,7 @@ const express = require("express")
 const App = express()
 const Port = 7777
 const UserRouter = require("./Routes/UserRoutes")
-// const AdminRouter = require("./Routes/AdminRoutes")
+const AdminRouter = require("./Routes/AdminRoutes")
 require('dotenv').config()
 const mongoose = require("mongoose")
 const cors = require("cors")
@@ -26,7 +26,7 @@ mongoose.connect("mongodb://127.0.0.1/GlobalTweet")
 App.use(cors())
 App.use(express.json())
 App.use("/api/user",UserRouter)
-// App.use("/api/admin",AdminRouter)
+App.use("/api/admin",AdminRouter)
 
 
 
