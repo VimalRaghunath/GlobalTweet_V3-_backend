@@ -1,5 +1,6 @@
 // const AdminSchema = require("../Model/AdminSchema")
 
+const PostSchema = require("../Model/PostSchema");
 const UserSchemaa = require("../Model/UserSchemaa");
 
 module.exports = {
@@ -26,7 +27,7 @@ module.exports = {
 
   getAllposts : async (req,res) => {
     try {
-      const posts = await UserSchemaa.find();
+      const posts = await PostSchema.find();
       res.json(posts)
     } catch (error) {
       console.error(error);
