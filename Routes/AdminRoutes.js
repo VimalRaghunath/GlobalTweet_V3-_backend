@@ -6,8 +6,9 @@ const AdminController= require("../Controller/AdminController")
 
 AdminRouter.get('/users',(AdminController.getAllusers))
 AdminRouter.get('/posts',(AdminController.getAllposts))
-AdminRouter.get('/block/:id',(AdminController.BlocktheUser))
-AdminRouter.get('/unblock/:id',(AdminController.unblockUser))
+AdminRouter.put('/block/:id',(AdminController.BlocktheUser))
+AdminRouter.put('/unblock/:id',(AdminController.unblockUser))
+AdminRouter.get('/blockedusers',(AdminController.BlockedUsers))
 
 
 module.exports = AdminRouter
