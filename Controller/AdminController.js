@@ -76,27 +76,20 @@ module.exports = {
 
   BlockedUsers: async (req, res) => {
     try {
-      const userId = req.params.id;
-      const user = await UserSchemaa.findById(userId).populate({
-        path: "isBlocked",
-        model: "User",
-      });
+      const user = await UserSchemaa.find({ isBlocked: true });
 
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
-
-      const isBlocked = user.isBlocked;
-
+    
       return res.status(200).json({
         status: "success",
         message: "Blocked users are here",
-        isBlocked: isBlocked,
-      })
-
+        user,
+      });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ error: "Internal server error"})
+      return res.status(500).json({ error: "Internal server error" });
     }
   },
 
