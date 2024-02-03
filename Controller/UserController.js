@@ -590,7 +590,7 @@ getComment: async (req, res) => {
     }
   },
 
-  // messsages showing in profile [GET api/user/messages]---------------
+  // messaging []---------------
 
   
 

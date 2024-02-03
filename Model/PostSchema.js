@@ -10,6 +10,6 @@ const PostSchema = new mongoose.Schema({
   tweet: { type: String },
 
   // Date:{type:Date,default:Date.now}
-});
+},{ timestamps: true });
 
 module.exports = mongoose.model("Post", PostSchema);

@@ -6,11 +6,10 @@ const AdminRouter = require("./Routes/AdminRoutes")
 require('dotenv').config()
 const mongoose = require("mongoose")
 const cors = require("cors")
-const socketIO = require("socket.io")
 
 
 const http = require("http").createServer(App)
-const io = socketIO(http)
+// const io = socketIO(http)
 
 
 
@@ -30,21 +29,21 @@ App.use("/api/admin",AdminRouter)
 
 
 
-io.on("connection",(socket) => {
-  console.log("A user connected");
+// io.on("connection",(socket) => {
+//   console.log("A user connected");
 
-  socket.on("message",(data) => {
-    io.emit("message", data)
-  })
+//   socket.on("message",(data) => {
+//     io.emit("message", data)
+//   })
 
-  socket.on("notification", (notificationData) => {
-    io.emit("notification", notificationData)
-  })
+//   socket.on("notification", (notificationData) => {
+//     io.emit("notification", notificationData)
+//   })
 
-  socket.on("disconnect", () => {
-    console.log("user disconnected");
-  })
-})
+//   socket.on("disconnect", () => {
+//     console.log("user disconnected");
+//   })
+// })
 
 
 
