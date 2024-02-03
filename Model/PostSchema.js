@@ -8,7 +8,7 @@ const PostSchema = new mongoose.Schema({
   likes: [{ type: mongoose.Schema.ObjectId, ref: "User" }],
   comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
   tweet: { type: String },
-
+  
   // Date:{type:Date,default:Date.now}
 },{ timestamps: true });
 
