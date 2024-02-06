@@ -7,6 +7,8 @@ const { joiPostValidationSchema } = require("../Model/ValidationSchema");
 const messageSchema = require("../Model/ChatSchema");
 const comment = require("../Model/CommentSchema");
 const CommentSchema = require("../Model/CommentSchema");
+const ChatSchema = require("../Model/ChatSchema");
+const { result } = require("@hapi/joi/lib/base");
 
 module.exports = {
   //create a user with name,email,mobile,username,password (POST api/user/createanaccount)--------------
@@ -76,7 +78,7 @@ module.exports = {
         { id: User._id },
         process.env.USER_ACCESS_TOKEN_SECRET
       );
-      const {password,...rest}=User._doc
+      const { password, ...rest } = User._doc;
       return res.status(200).json({
         status: "user_success",
         message: "user Signin successful",
@@ -155,7 +157,7 @@ module.exports = {
     if (!post) {
       return res.status(404).json({ error: "No Posts Found" });
     }
-   return res.status(200).json({
+    return res.status(200).json({
       status: "success",
       message: "post successfully fetched",
       data: post,
@@ -182,29 +184,22 @@ module.exports = {
     });
   },
 
-  // explore/search option [GET api/user/explore]--------------------
+  // explore/search option [GET api/user?explore]--------------------
 
   Explore: async (req, res) => {
-    try {
-      const { query } = req.query;
+    const keyword = req.query.search
+      ? {
+          $or: [
+            { name: { $regex: req.query.search, $options: "i" } },
+            { email: { $regex: req.query.search, $options: "i" } },
+          ],
+        }
+      : {};
 
-      if (!query) {
-        return res.status(400).json({ message: "Query parameter is required" });
-      }
-
-      const regex = new RegExp(query, "i");
-
-      const results = await Tweet.find({ text: regex });
-
-      res.status(200).json({
-        status: "success",
-        message: "Search successful",
-        data: results,
-      });
-    } catch (error) {
-      console.error("Error in explore:", error);
-      res.status(500).json({ status: "error", message: "Internal server error" });
-    }
+    const users = await UserSchemaa.find(keyword).find({
+      _id: { $ne: req.user._id },
+    });
+    res.send(users);
   },
 
   // Editprofile of user [PUT api/user/editprofile]------------------------
@@ -227,7 +222,6 @@ module.exports = {
   },
 
   EditAvatar: async (req, res) => {
-
     const { avatar, id } = req.body;
 
     const editavatar = UserSchemaa.findOne({ _id: id });
@@ -363,7 +357,6 @@ module.exports = {
 
         res.json(newComment);
       }
-      
     } catch (error) {
       console.error("Error handling user comments:", error);
       res.status(500).json({ error: "Internal Server Error" });
@@ -372,35 +365,31 @@ module.exports = {
 
   // comment getting [GET api/user/getcomment]--------------------------
 
+  getComment: async (req, res) => {
+    const postId = req.params.id;
 
-getComment: async (req, res) => {
-  const postId = req.params.id;
+    try {
+      const posts = await PostSchema.findById(postId).populate({
+        path: "comments",
+        populate: {
+          path: "userId",
+          model: "User",
+        },
+      });
 
-  try {
-    const posts = await PostSchema.findById(postId).
-    populate({
-      path: 'comments',
-      populate: {
-        path: 'userId', 
-        model:'User',
-      },
-    });
+      if (!posts) {
+        return res.status(404).json({ error: "No Posts Found" });
+      }
 
-    if (!posts) {
-      return res.status(404).json({ error: "No Posts Found" });
+      return res.status(200).json({
+        status: "success",
+        message: "post successfully fetched",
+        data: posts,
+      });
+    } catch (error) {
+      return res.status(500).json({ error: "Internal Server Error" });
     }
-
-    return res.status(200).json({
-      status: "success",
-      message: "post successfully fetched",
-      data: posts,
-    });
-  } catch (error) {
-    return res.status(500).json({ error: "Internal Server Error" });
-  }
-},
-
-
+  },
 
   // follow the user [POST api/user/follow/:id]--------------------
 
@@ -408,7 +397,7 @@ getComment: async (req, res) => {
     try {
       const userId = req.params.id;
       const loggedInUserId = res.token;
- 
+
       if (userId === loggedInUserId) {
         return res.status(400).json({ error: "Cannot follow yourself" });
       }
@@ -428,7 +417,7 @@ getComment: async (req, res) => {
 
       if (loggedInUser.following.includes(userId)) {
         return res.status(400).json({ error: "Already following this user" });
-      } 
+      }
 
       // Update following array for logged-in user------------
 
@@ -452,9 +441,9 @@ getComment: async (req, res) => {
 
   unfollowUser: async (req, res) => {
     try {
-      const  userId  = req.params.id;
-      const  loggedInUserId  = res.token;
-      
+      const userId = req.params.id;
+      const loggedInUserId = res.token;
+
       if (userId === loggedInUserId) {
         return res.status(400).json({ error: "Cannot unfollow yourself" });
       }
@@ -493,64 +482,61 @@ getComment: async (req, res) => {
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Internal Server Error" });
-    };
- 
+    }
   },
-  
+
   // followers count [GET api/user/followerscount/:userId]----------------
 
   getFollowersCount: async (req, res) => {
     try {
       const userId = req.params.id;
       const user = await UserSchemaa.findById(userId);
-    
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({ count: user.followers.length });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
+  },
 
-    res.json({ count: user.followers.length });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
- },
+  // following count [GET api/user/followingcount/:userId]----------------
 
+  getFollowingCount: async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const user = await UserSchemaa.findById(userId);
 
- // following count [GET api/user/followingcount/:userId]----------------
-   
- getFollowingCount: async (req, res) => {
-  try {
-    const userId = req.params.id;
-    const user = await UserSchemaa.findById(userId);
-    
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({ count: user.following.length });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
-    
-    res.json({ count: user.following.length });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-},
+  },
 
   // get all followers [GET api/user/followers]------------------
 
   getFollowers: async (req, res) => {
-
     try {
-      const userId = req.params.id; 
+      const userId = req.params.id;
       const user = await UserSchemaa.findById(userId).populate({
-        path: 'followers', 
-        model: 'User',
+        path: "followers",
+        model: "User",
       });
-  
+
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
-  
+
       const followers = user.followers;
-  
+
       return res.status(200).json({
         status: "success",
         message: "Followers are here",
@@ -564,35 +550,131 @@ getComment: async (req, res) => {
 
   // get following [GET api/user/following]-------------------
 
-  getFollowing: async (req,res) => {
-
+  getFollowing: async (req, res) => {
     try {
-       const userId = req.params.id;
-       const user = await UserSchemaa.findById(userId).populate({
-        path: 'following',
-        model: 'User'
-       });
-     
+      const userId = req.params.id;
+      const user = await UserSchemaa.findById(userId).populate({
+        path: "following",
+        model: "User",
+      });
+
       if (!user) {
-        return res.status(404).json({ error: "User not found" })
-      } 
-     
+        return res.status(404).json({ error: "User not found" });
+      }
+
       const following = user.following;
 
       return res.status(200).json({
         status: "success",
         message: "Following users are here",
         following: following,
-      })
+      });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ error: "Internal server error" })
+      return res.status(500).json({ error: "Internal server error" });
     }
   },
 
-  // messaging []---------------
+  // chat [POST api/user/chat]---------------
+
+  ChatUser: async (req, res) => {
+
+      const { userId } = req.body;
+
+      if (!userId) {
+        console.log("UserId param not sent with request");
+        return res.sendStatus(400);
+      }
+      var isChat = await ChatSchema.find({
+        isGroupChat: false,
+        $and: [
+          { users: { $elemMatch: { $eq: res.user } } },
+          { users: { $elemMatch: { $eq: userId } } },
+        ],
+      })
+        .populate("users", "-password")
+        .populate("latestMessage");
+      isChat = await UserSchemaa.populate(isChat, {
+        path: "latestMessage.sender",
+        select: "name image email",
+      });
+
+      if (isChat.length > 0) {
+        res.send(isChat[0]);
+      } else {
+        var chatData = {
+          chatName: "sender",
+          isGroupChat: false,
+          users: [res.user, userId],
+        };
+        try {
+          const createdChat = await ChatSchema.create(chatData);
+
+          const fullChat = await ChatSchema.findOne({
+            _id: createdChat._id,
+          }).populate("users", "-password");
+            res.status(200).send(fullChat);
+        } catch (error) {
+          res.status(400);
+          throw new Error(error.message);
+        }
+      }
+  },
+
+  //fetching all of the chats for that particular user [GET api/user/chat/fetchchats]-----------
+
+
+  fetchChats: async (req,res) => {
+    
+    try {
+       ChatSchema.find({ users: { $elemMatch: { $eq:res.user }} }).populate("users","-password")
+       .populate("groupAdmin","-password")
+       .populate("latestMessage").sort({ updatedAt: -1 }).then(async(results) => {
+        results = await UserSchemaa.populate(results, {
+          path: "latestMessage.sender",
+          select: "name image email"
+        });
+         res.status(200).send(results);
+     })
+    } catch (error) {
+      res.status(400);
+      throw new Error(error.message);
+    }
+
+  },
+
+  // creating group chats [POST api/user/chat/group]----------------
+
+
+  createGroupChats: async (req,res) => {
+    if(!req.body.user || !req.body.name) {
+      return res.status(400).send({ message: "Please fill all the fields" })
+    }
+  },
+
+
+  //
+
+  renameGroup: async (req,res) => {
+
+  },
 
   
+  //
+
+  removeFromGroup: async (req,res) => {
+
+  },
 
 
+  //
+
+  addToGroup: async (req,res) => {
+
+  },
+
+
+
+
+  
 };

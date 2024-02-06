@@ -29,7 +29,12 @@ UserRouter.get('/followerscount/:id',Auth, UserController.getFollowersCount)
 UserRouter.get('/followingcount/:id',Auth, UserController.getFollowingCount)
 UserRouter.get('/followers/:id',Auth,Trycatch(UserController.getFollowers))
 UserRouter.get('/following/:id',Auth,Trycatch(UserController.getFollowing))
-
+UserRouter.post('/chat',Auth,Trycatch(UserController.ChatUser))
+UserRouter.get('/chat/fetchchats',Auth,Trycatch(UserController.fetchChats))
+UserRouter.get('/chat/group',Auth,Trycatch(UserController.createGroupChats))
+UserRouter.get('/chat/rename',Auth,Trycatch(UserController.renameGroup))
+UserRouter.get('/chat/groupremove',Auth,Trycatch(UserController.removeFromGroup))
+UserRouter.get('/chat/groupadd',Auth,Trycatch(UserController.addToGroup))
 
 
 
