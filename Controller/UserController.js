@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const UserSchemaa = require("../Model/UserSchemaa");
 const PostSchema = require("../Model/PostSchema");
 const { joiPostValidationSchema } = require("../Model/ValidationSchema");
-const messageSchema = require("../Model/messageSchema");
+const messageSchema = require("../Model/ChatSchema");
 const comment = require("../Model/CommentSchema");
 const CommentSchema = require("../Model/CommentSchema");
 
