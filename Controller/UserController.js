@@ -8,7 +8,8 @@ const messageSchema = require("../Model/ChatSchema");
 const comment = require("../Model/CommentSchema");
 const CommentSchema = require("../Model/CommentSchema");
 const ChatSchema = require("../Model/ChatSchema");
-const { result } = require("@hapi/joi/lib/base");
+const { result, error } = require("@hapi/joi/lib/base");
+const { json } = require("express");
 
 module.exports = {
   //create a user with name,email,mobile,username,password (POST api/user/createanaccount)--------------
@@ -197,7 +198,7 @@ module.exports = {
       : {};
 
     const users = await UserSchemaa.find(keyword).find({
-      _id: { $ne: req.user._id },
+      _id: { $ne: res.user },
     });
     res.send(users);
   },
@@ -578,103 +579,176 @@ module.exports = {
   // chat [POST api/user/chat]---------------
 
   ChatUser: async (req, res) => {
+    const { userId } = req.body;
 
-      const { userId } = req.body;
+    if (!userId) {
+      console.log("UserId param not sent with request");
+      return res.sendStatus(400);
+    }
+    var isChat = await ChatSchema.find({
+      isGroupChat: false,
+      $and: [
+        { users: { $elemMatch: { $eq: res.user } } },
+        { users: { $elemMatch: { $eq: userId } } },
+      ],
+    })
+      .populate("users", "-password")
+      .populate("latestMessage");
+    isChat = await UserSchemaa.populate(isChat, {
+      path: "latestMessage.sender",
+      select: "name image email",
+    });
 
-      if (!userId) {
-        console.log("UserId param not sent with request");
-        return res.sendStatus(400);
-      }
-      var isChat = await ChatSchema.find({
+    if (isChat.length > 0) {
+      res.send(isChat[0]);
+    } else {
+      var chatData = {
+        chatName: "sender",
         isGroupChat: false,
-        $and: [
-          { users: { $elemMatch: { $eq: res.user } } },
-          { users: { $elemMatch: { $eq: userId } } },
-        ],
-      })
-        .populate("users", "-password")
-        .populate("latestMessage");
-      isChat = await UserSchemaa.populate(isChat, {
-        path: "latestMessage.sender",
-        select: "name image email",
-      });
+        users: [res.user, userId],
+      };
+      try {
+        const createdChat = await ChatSchema.create(chatData);
 
-      if (isChat.length > 0) {
-        res.send(isChat[0]);
-      } else {
-        var chatData = {
-          chatName: "sender",
-          isGroupChat: false,
-          users: [res.user, userId],
-        };
-        try {
-          const createdChat = await ChatSchema.create(chatData);
-
-          const fullChat = await ChatSchema.findOne({
-            _id: createdChat._id,
-          }).populate("users", "-password");
-            res.status(200).send(fullChat);
-        } catch (error) {
-          res.status(400);
-          throw new Error(error.message);
-        }
+        const fullChat = await ChatSchema.findOne({
+          _id: createdChat._id,
+        }).populate("users", "-password");
+        res.status(200).send(fullChat);
+      } catch (error) {
+        res.status(400);
+        throw new Error(error.message);
       }
+    }
   },
 
   //fetching all of the chats for that particular user [GET api/user/chat/fetchchats]-----------
 
-
-  fetchChats: async (req,res) => {
-    
+  fetchChats: async (req, res) => {
     try {
-       ChatSchema.find({ users: { $elemMatch: { $eq:res.user }} }).populate("users","-password")
-       .populate("groupAdmin","-password")
-       .populate("latestMessage").sort({ updatedAt: -1 }).then(async(results) => {
-        results = await UserSchemaa.populate(results, {
-          path: "latestMessage.sender",
-          select: "name image email"
+      ChatSchema.find({ users: { $elemMatch: { $eq: res.user } } })
+        .populate("users", "-password")
+        .populate("groupAdmin", "-password")
+        .populate("latestMessage")
+        .sort({ updatedAt: -1 })
+        .then(async (results) => {
+          results = await UserSchemaa.populate(results, {
+            path: "latestMessage.sender",
+            select: "name image email",
+          });
+          res.status(200).send(results);
         });
-         res.status(200).send(results);
-     })
     } catch (error) {
       res.status(400);
       throw new Error(error.message);
     }
-
   },
 
   // creating group chats [POST api/user/chat/group]----------------
 
+  createGroupChats: async (req, res) => {
+    if (!req.body.users || !req.body.name) {
+      return res.status(400).send({ message: "Please fill all the fields" });
+    }
 
-  createGroupChats: async (req,res) => {
-    if(!req.body.user || !req.body.name) {
-      return res.status(400).send({ message: "Please fill all the fields" })
+    var users = JSON.parse(req.body.users);
+
+    if (users.length < 2) {
+      return res
+        .status(400)
+        .send("moe than 2 users are required to form a group chat");
+    }
+    users.push(req.users);
+
+    try {
+      const groupChat = await ChatSchema.create({
+        chatName: req.body.name,
+        users: users,
+        isGroupChat: true,
+        groupAdmin: req.user,
+      });
+      const fullGroupChat = await ChatSchema.findOne({ _id: groupChat._id })
+        .populate("users", "-password")
+        .populate("groupAdmin", "-password");
+
+      res.status(200).json(fullGroupChat);
+    } catch (error) {
+      res.status(400);
+      throw new error(error.message);
+    }
+  },
+
+  //Rename the group [PUT api/user/chat/rename]------------------
+
+  renameGroup: async (req, res) => {
+
+    const { chatId, chatName } = req.body;
+
+    const updatedChat = await ChatSchema.findByIdAndUpdate(
+      chatId,
+      {
+        chatName: chatName,
+      },
+      {
+        new: true,
+      }
+    )
+      .populate("users", "-password")
+      .populate("groupAdmin", "-password");
+
+    if (!updatedChat) {
+      res.status(404);
+      throw new error("Chat not found");
+    } else {
+      res.json(updatedChat);
+    }
+  },
+  
+
+  //add to the group [PUT api/user/chat/groupadd]---------------
+
+  addToGroup: async (req, res) => {
+    const { chatId, userId } = req.body;
+
+    const added = await ChatSchema.findByIdAndUpdate(
+      chatId,
+      {
+        $push: { users: userId },
+        
+      },
+      { new: true }
+    ).populate("users", "-password")
+    .populate("groupAdmin", "-password");
+
+    if (!added) {
+      res.status(404);
+      throw new error("Chat not found");
+    } else {
+      res.json(added);
     }
   },
 
 
-  //
+  // remove from the group [PUT api/user/chat/groupremove]
 
-  renameGroup: async (req,res) => {
+  removeFromGroup: async (req, res) => {
+    const { chatId, userId } = req.body;
 
+    const removed = await ChatSchema.findByIdAndUpdate(
+      chatId,
+      {
+        $pull: { users: userId },
+        
+      },
+      { new: true }
+    ).populate("users", "-password")
+    .populate("groupAdmin", "-password");
+
+    if (!removed) {
+      res.status(404);
+      throw new error("Chat not found");
+    } else {
+      res.json(removed);
+    }
   },
 
-  
-  //
-
-  removeFromGroup: async (req,res) => {
-
-  },
-
-
-  //
-
-  addToGroup: async (req,res) => {
-
-  },
-
-
-
-
-  
 };

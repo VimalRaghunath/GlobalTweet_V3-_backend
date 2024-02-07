@@ -31,10 +31,10 @@ UserRouter.get('/followers/:id',Auth,Trycatch(UserController.getFollowers))
 UserRouter.get('/following/:id',Auth,Trycatch(UserController.getFollowing))
 UserRouter.post('/chat',Auth,Trycatch(UserController.ChatUser))
 UserRouter.get('/chat/fetchchats',Auth,Trycatch(UserController.fetchChats))
-UserRouter.get('/chat/group',Auth,Trycatch(UserController.createGroupChats))
-UserRouter.get('/chat/rename',Auth,Trycatch(UserController.renameGroup))
-UserRouter.get('/chat/groupremove',Auth,Trycatch(UserController.removeFromGroup))
-UserRouter.get('/chat/groupadd',Auth,Trycatch(UserController.addToGroup))
+UserRouter.post('/chat/group',Auth,Trycatch(UserController.createGroupChats))
+UserRouter.put('/chat/rename',Auth,Trycatch(UserController.renameGroup))
+UserRouter.put('/chat/groupadd',Auth,Trycatch(UserController.addToGroup))
+UserRouter.put('/chat/groupremove',Auth,Trycatch(UserController.removeFromGroup))
 
 
 
