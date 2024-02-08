@@ -195,8 +195,7 @@ module.exports = {
             { email: { $regex: req.query.search, $options: "i" } },
           ],
         }
-      : {};
-
+      : {"k":"k"};
     const users = await UserSchemaa.find(keyword).find({
       _id: { $ne: res.user },
     });
