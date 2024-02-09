@@ -9,7 +9,6 @@ const PostSchema = new mongoose.Schema({
   comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
   tweet: { type: String },
   
-  // Date:{type:Date,default:Date.now}
 },{ timestamps: true });
 
 module.exports = mongoose.model("Post", PostSchema);

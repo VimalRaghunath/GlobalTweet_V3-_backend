@@ -74,6 +74,9 @@ module.exports = {
       });
     }
 
+    if (User.isBlocked) {
+      return res.status(401).json({ status: "error", message: "Blocked User" });
+    }
     if (User) {
       const token = jwt.sign(
         { id: User._id },
@@ -195,7 +198,7 @@ module.exports = {
             { email: { $regex: req.query.search, $options: "i" } },
           ],
         }
-      : {"k":"k"};
+      : { k: "k" };
     const users = await UserSchemaa.find(keyword).find({
       _id: { $ne: res.user },
     });
@@ -240,9 +243,14 @@ module.exports = {
   // Getallusers in follow section [GET api/user/allusers]
 
   Getallusers: async (req, res) => {
-    const allusers = await UserSchemaa.find();
+    try {
+      const loggedInUserId = res.token;
+      const allusers = await UserSchemaa.find({ _id: { $ne: loggedInUserId } });
 
-    res.json(allusers);
+      res.json(allusers);
+    } catch (error) {
+      console.log(error);
+    }
   },
 
   // get user by Id  [GET api/user/getuserbyid]
@@ -679,7 +687,6 @@ module.exports = {
   //Rename the group [PUT api/user/chat/rename]------------------
 
   renameGroup: async (req, res) => {
-
     const { chatId, chatName } = req.body;
 
     const updatedChat = await ChatSchema.findByIdAndUpdate(
@@ -701,7 +708,6 @@ module.exports = {
       res.json(updatedChat);
     }
   },
-  
 
   //add to the group [PUT api/user/chat/groupadd]---------------
 
@@ -712,11 +718,11 @@ module.exports = {
       chatId,
       {
         $push: { users: userId },
-        
       },
       { new: true }
-    ).populate("users", "-password")
-    .populate("groupAdmin", "-password");
+    )
+      .populate("users", "-password")
+      .populate("groupAdmin", "-password");
 
     if (!added) {
       res.status(404);
@@ -725,7 +731,6 @@ module.exports = {
       res.json(added);
     }
   },
-
 
   // remove from the group [PUT api/user/chat/groupremove]
 
@@ -736,11 +741,11 @@ module.exports = {
       chatId,
       {
         $pull: { users: userId },
-        
       },
       { new: true }
-    ).populate("users", "-password")
-    .populate("groupAdmin", "-password");
+    )
+      .populate("users", "-password")
+      .populate("groupAdmin", "-password");
 
     if (!removed) {
       res.status(404);
@@ -749,5 +754,4 @@ module.exports = {
       res.json(removed);
     }
   },
-
 };
