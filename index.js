@@ -13,7 +13,7 @@ const http = require("http").createServer(App)
 
 
 
-mongoose.connect("mongodb://127.0.0.1/GlobalTweet")
+mongoose.connect(process.env.MONGODB)
     .then(() => {
       console.log('MongoDB Connected');
     })
